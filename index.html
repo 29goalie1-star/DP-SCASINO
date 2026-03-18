@@ -802,13 +802,7 @@
             const [nextAllowanceTime, setNextAllowanceTime] = useState('');
             const [currentGame, setCurrentGame] = useState('HOME');
             const [history, setHistory] = useState([]);
-            const [leaderboard, setLeaderboard] = useState([
-                { name: 'Whale_Watcher', balance: 50000, isUser: false },
-                { name: 'Lucky_Lucy', balance: 25000, isUser: false },
-                { name: 'Card_Shark', balance: 15000, isUser: false },
-                { name: 'Pookie', balance: 12000, isUser: false },
-                { name: 'NoobMaster69', balance: 500, isUser: false },
-            ]);
+            const [leaderboard, setLeaderboard] = useState([]);
 
             useEffect(() => {
                 const checkAllowance = () => {
