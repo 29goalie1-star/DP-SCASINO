@@ -117,12 +117,13 @@
             Play = () => null, 
             Hand = () => null, 
             ArrowDownCircle = () => null,
-            Trophy = () => null
+            Trophy = () => null,
+            Clock = () => null
         } = Lucide;
 
         // --- Components ---
 
-        const Header = ({ balance }) => (
+        const Header = ({ balance, onClaimAllowance, allowanceReady, nextAllowanceTime }) => (
             <header className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)]">
@@ -131,6 +132,19 @@
                     <h1 className="text-xl font-bold tracking-tighter text-white uppercase">Casino</h1>
                 </div>
                 <div className="flex items-center gap-4">
+                    {allowanceReady ? (
+                        <button 
+                            onClick={onClaimAllowance}
+                            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all animate-pulse shadow-[0_0_15px_rgba(37,99,235,0.4)]"
+                        >
+                            Claim $500
+                        </button>
+                    ) : (
+                        <div className="bg-zinc-900 border border-white/5 px-4 py-2 rounded-full flex items-center gap-2 text-zinc-500">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-widest">{nextAllowanceTime}</span>
+                        </div>
+                    )}
                     <div className="bg-zinc-900 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2">
                         <Coins className="w-4 h-4 text-blue-400" />
                         <span className="font-mono font-bold text-blue-400">${balance.toLocaleString()}</span>
@@ -780,6 +794,12 @@
                 const saved = localStorage.getItem('casino_balance');
                 return saved ? parseInt(saved) : 1000;
             });
+            const [lastAllowance, setLastAllowance] = useState(() => {
+                const saved = localStorage.getItem('casino_last_allowance');
+                return saved ? parseInt(saved) : 0;
+            });
+            const [allowanceReady, setAllowanceReady] = useState(false);
+            const [nextAllowanceTime, setNextAllowanceTime] = useState('');
             const [currentGame, setCurrentGame] = useState('HOME');
             const [history, setHistory] = useState([]);
             const [leaderboard, setLeaderboard] = useState([
@@ -791,7 +811,30 @@
             ]);
 
             useEffect(() => {
+                const checkAllowance = () => {
+                    const now = Date.now();
+                    const oneHour = 60 * 60 * 1000;
+                    const timeLeft = (lastAllowance + oneHour) - now;
+                    
+                    if (timeLeft <= 0) {
+                        setAllowanceReady(true);
+                        setNextAllowanceTime('Ready');
+                    } else {
+                        setAllowanceReady(false);
+                        const minutes = Math.floor(timeLeft / (60 * 1000));
+                        const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+                        setNextAllowanceTime(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+                    }
+                };
+
+                checkAllowance();
+                const interval = setInterval(checkAllowance, 1000);
+                return () => clearInterval(interval);
+            }, [lastAllowance]);
+
+            useEffect(() => {
                 localStorage.setItem('casino_balance', balance.toString());
+                localStorage.setItem('casino_last_allowance', lastAllowance.toString());
                 setLeaderboard(prev => {
                     const userEntry = prev.find(e => e.isUser);
                     if (userEntry) {
@@ -816,9 +859,22 @@
                 setHistory(prev => [{ game, amount: 0, result: 'PUSH', timestamp: Date.now() }, ...prev].slice(0, 10));
             };
 
+            const claimAllowance = () => {
+                if (allowanceReady) {
+                    setBalance(prev => prev + 500);
+                    setLastAllowance(Date.now());
+                    setHistory(prev => [{ game: 'Allowance', amount: 500, result: 'WIN', timestamp: Date.now() }, ...prev].slice(0, 10));
+                }
+            };
+
             return (
                 <div className="min-h-screen bg-[#050505] text-zinc-100 font-sans selection:bg-blue-600 selection:text-white">
-                    <Header balance={balance} />
+                    <Header 
+                        balance={balance} 
+                        onClaimAllowance={claimAllowance} 
+                        allowanceReady={allowanceReady}
+                        nextAllowanceTime={nextAllowanceTime}
+                    />
 
                     <main className="max-w-7xl mx-auto px-6">
                         <AnimatePresence mode="wait">
