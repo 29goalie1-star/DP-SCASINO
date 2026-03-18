@@ -621,10 +621,10 @@
             const [selectedMatch, setSelectedMatch] = useState(null);
             const [betting, setBetting] = useState(false);
             const [matches, setMatches] = useState([
-                { id: 1, sport: 'Football', teamA: 'Cyber Knights', teamB: 'Neon Raiders', oddsA: 1.8, oddsB: 2.1, time: 'LIVE' },
-                { id: 2, sport: 'Basketball', teamA: 'Gravity Defiers', teamB: 'Rim Crushers', oddsA: 1.9, oddsB: 1.9, time: 'LIVE' },
+                { id: 1, sport: 'Football', teamA: 'Cyber Knights', teamB: 'Neon Raiders', oddsA: 1.8, oddsB: 2.2, time: 'LIVE' },
+                { id: 2, sport: 'Basketball', teamA: 'Gravity Defiers', teamB: 'Rim Crushers', oddsA: 2.0, oddsB: 1.9, time: 'LIVE' },
                 { id: 3, sport: 'Soccer', teamA: 'Shadow Strikers', teamB: 'Golden Boot FC', oddsA: 2.5, oddsB: 1.5, time: '15:00' },
-                { id: 4, sport: 'Tennis', teamA: 'Ace Master', teamB: 'Baseline King', oddsA: 1.7, oddsB: 2.2, time: '18:30' },
+                { id: 4, sport: 'Tennis', teamA: 'Ace Master', teamB: 'Baseline King', oddsA: 1.7, oddsB: 2.4, time: '18:30' },
             ]);
 
             const placeBet = (match, team, odds) => {
@@ -636,7 +636,7 @@
                 setTimeout(() => {
                     const won = Math.random() > 0.5;
                     if (won) {
-                        const winAmount = Math.floor(betAmount * odds) - betAmount;
+                        const winAmount = Math.floor(betAmount * odds);
                         onWin(winAmount);
                     } else {
                         onLoss(betAmount);
