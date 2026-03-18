@@ -116,7 +116,8 @@
             ChevronLeft = () => null, 
             Play = () => null, 
             Hand = () => null, 
-            ArrowDownCircle = () => null 
+            ArrowDownCircle = () => null,
+            Trophy = () => null
         } = Lucide;
 
         // --- Components ---
@@ -601,6 +602,104 @@
             );
         };
 
+        const Sports = ({ balance, onWin, onLoss }) => {
+            const [betAmount, setBetAmount] = useState(10);
+            const [selectedMatch, setSelectedMatch] = useState(null);
+            const [betting, setBetting] = useState(false);
+            const [matches, setMatches] = useState([
+                { id: 1, sport: 'Football', teamA: 'Cyber Knights', teamB: 'Neon Raiders', oddsA: 1.8, oddsB: 2.1, time: 'LIVE' },
+                { id: 2, sport: 'Basketball', teamA: 'Gravity Defiers', teamB: 'Rim Crushers', oddsA: 1.9, oddsB: 1.9, time: 'LIVE' },
+                { id: 3, sport: 'Soccer', teamA: 'Shadow Strikers', teamB: 'Golden Boot FC', oddsA: 2.5, oddsB: 1.5, time: '15:00' },
+                { id: 4, sport: 'Tennis', teamA: 'Ace Master', teamB: 'Baseline King', oddsA: 1.7, oddsB: 2.2, time: '18:30' },
+            ]);
+
+            const placeBet = (match, team, odds) => {
+                if (balance < betAmount) return;
+                setBetting(true);
+                setSelectedMatch({ ...match, team, odds });
+
+                // Simulate match resolution after 3 seconds
+                setTimeout(() => {
+                    const won = Math.random() > 0.5;
+                    if (won) {
+                        const winAmount = Math.floor(betAmount * odds) - betAmount;
+                        onWin(winAmount);
+                    } else {
+                        onLoss(betAmount);
+                    }
+                    setBetting(false);
+                    setSelectedMatch(null);
+                }, 3000);
+            };
+
+            return (
+                <div className="py-8 max-w-4xl mx-auto">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)]">
+                            <Trophy className="w-6 h-6 text-white" />
+                        </div>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Sportsbook</h2>
+                    </div>
+
+                    {betting ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <motion.div 
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mb-6"
+                            />
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Match in Progress</h3>
+                            <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest">
+                                Betting ${betAmount} on {selectedMatch.team} ({selectedMatch.odds}x)
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4 bg-zinc-900 p-2 rounded-2xl border border-white/5 w-fit mb-8">
+                                {[10, 50, 100, 500].map(amt => (
+                                    <button 
+                                        key={amt}
+                                        onClick={() => setBetAmount(amt)}
+                                        className={`px-4 py-2 rounded-xl font-bold transition-all ${betAmount === amt ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                    >
+                                        ${amt}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {matches.map(match => (
+                                    <div key={match.id} className="bg-zinc-900/50 border border-white/5 rounded-[32px] p-6 hover:bg-zinc-900 transition-all">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-white/5 px-2 py-1 rounded">{match.sport}</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500 animate-pulse">{match.time}</span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button 
+                                                onClick={() => placeBet(match, match.teamA, match.oddsA)}
+                                                className="group flex flex-col items-center gap-2 p-4 bg-white/5 rounded-2xl hover:bg-blue-600/20 transition-all border border-transparent hover:border-blue-600/50"
+                                            >
+                                                <span className="text-sm font-bold text-zinc-300 group-hover:text-white">{match.teamA}</span>
+                                                <span className="text-xl font-black text-blue-400">{match.oddsA}</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => placeBet(match, match.teamB, match.oddsB)}
+                                                className="group flex flex-col items-center gap-2 p-4 bg-white/5 rounded-2xl hover:bg-blue-600/20 transition-all border border-transparent hover:border-blue-600/50"
+                                            >
+                                                <span className="text-sm font-bold text-zinc-300 group-hover:text-white">{match.teamB}</span>
+                                                <span className="text-xl font-black text-blue-400">{match.oddsB}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
         const Leaderboard = ({ entries }) => (
             <div className="py-12 max-w-2xl mx-auto">
                 <div className="flex items-center gap-3 mb-8">
@@ -646,11 +745,12 @@
         );
 
         const Home = ({ onSelect }) => (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 py-12">
                 {[
                     { id: 'SLOTS', name: 'Slots', icon: RotateCcw, color: 'bg-blue-600', desc: 'Triple 7s for x50 payout' },
                     { id: 'BLACKJACK', name: 'Blackjack', icon: Hand, color: 'bg-blue-500', desc: 'Beat the dealer to 21' },
                     { id: 'ROULETTE', name: 'Roulette', icon: RotateCcw, color: 'bg-blue-400', desc: 'Bet on colors or numbers' },
+                    { id: 'SPORTS', name: 'Sports', icon: Trophy, color: 'bg-blue-700', desc: 'Bet on live matches' },
                     { id: 'LEADERBOARD', name: 'Leaderboard', icon: History, color: 'bg-zinc-800', desc: 'Check the high rollers' },
                 ].map(game => (
                     <motion.button
@@ -780,6 +880,13 @@
                                                 balance={balance} 
                                                 onWin={(amt) => handleWin(amt, 'Roulette')} 
                                                 onLoss={(amt) => handleLoss(amt, 'Roulette')} 
+                                            />
+                                        )}
+                                        {currentGame === 'SPORTS' && (
+                                            <Sports 
+                                                balance={balance} 
+                                                onWin={(amt) => handleWin(amt, 'Sports')} 
+                                                onLoss={(amt) => handleLoss(amt, 'Sports')} 
                                             />
                                         )}
                                         {currentGame === 'LEADERBOARD' && (
