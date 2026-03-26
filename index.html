@@ -624,6 +624,7 @@
             const [gameState, setGameState] = useState('BETTING'); // BETTING, FLOP, TURN, RIVER, SHOWDOWN
             const [pot, setPot] = useState(0);
             const [bet, setBet] = useState(50);
+            const [currentAiBet, setCurrentAiBet] = useState(0);
             const [message, setMessage] = useState('');
 
             const createDeck = () => {
@@ -648,24 +649,26 @@
                 setDeck(newDeck);
                 setPot(bet * 2);
                 setGameState('FLOP');
-                setMessage('Flop dealt');
+                setCurrentAiBet(0);
+                setMessage('Flop dealt. AI checks.');
             };
 
             const nextStage = () => {
                 if (gameState === 'FLOP') {
                     setCommunityCards([...communityCards, deck.pop(), deck.pop(), deck.pop()]);
                     setGameState('TURN');
-                    setMessage('Turn dealt');
+                    setCurrentAiBet(Math.floor(Math.random() * 100));
+                    setMessage('Turn dealt. AI bets $' + currentAiBet);
                 } else if (gameState === 'TURN') {
                     setCommunityCards([...communityCards, deck.pop()]);
                     setGameState('RIVER');
-                    setMessage('River dealt');
+                    setCurrentAiBet(Math.floor(Math.random() * 100));
+                    setMessage('River dealt. AI bets $' + currentAiBet);
                 } else if (gameState === 'RIVER') {
                     setCommunityCards([...communityCards, deck.pop()]);
                     setGameState('SHOWDOWN');
                     setMessage('Showdown!');
                 } else if (gameState === 'SHOWDOWN') {
-                    // Simplified winner determination
                     const playerWins = Math.random() > 0.5;
                     if (playerWins) {
                         setMessage('You Win!');
@@ -677,9 +680,26 @@
                 }
             };
 
+            const check = () => {
+                if (currentAiBet > 0) return;
+                nextStage();
+            };
+
+            const call = () => {
+                if (balance < currentAiBet) return;
+                onLoss(currentAiBet);
+                setPot(pot + currentAiBet);
+                nextStage();
+            };
+
+            const fold = () => {
+                setMessage('AI Wins');
+                setGameState('BETTING');
+            };
+
             return (
                 <div className="flex flex-col items-center gap-8 py-8">
-                    <div className="text-white">Pot: ${pot}</div>
+                    <div className="text-white">Pot: ${pot} | AI Bet: ${currentAiBet}</div>
                     <div className="flex gap-2">
                         {communityCards.map((card, i) => (
                             <div key={i} className="w-16 h-24 bg-white text-black rounded-lg flex items-center justify-center font-bold">
@@ -698,10 +718,15 @@
                     {gameState === 'BETTING' && (
                         <button onClick={deal} className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl">Deal</button>
                     )}
-                    {gameState !== 'BETTING' && (
-                        <button onClick={nextStage} className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl">
-                            {gameState === 'SHOWDOWN' ? 'Collect' : 'Next'}
-                        </button>
+                    {gameState !== 'BETTING' && gameState !== 'SHOWDOWN' && (
+                        <div className="flex gap-2">
+                            <button onClick={check} className="px-8 py-4 bg-zinc-800 text-white font-bold rounded-2xl">Check</button>
+                            <button onClick={call} className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl">Call ${currentAiBet}</button>
+                            <button onClick={fold} className="px-8 py-4 bg-red-600 text-white font-bold rounded-2xl">Fold</button>
+                        </div>
+                    )}
+                    {gameState === 'SHOWDOWN' && (
+                        <button onClick={nextStage} className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl">Collect</button>
                     )}
                 </div>
             );
