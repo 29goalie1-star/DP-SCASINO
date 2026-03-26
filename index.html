@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DP's Casino</title>
+    <title>Goalie's Casino</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -127,9 +127,9 @@
             <header className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-                        <span className="text-white font-black text-xl">DP</span>
+                        <span className="text-white font-black text-xl">GC</span>
                     </div>
-                    <h1 className="text-xl font-bold tracking-tighter text-white uppercase">Casino</h1>
+                    <h1 className="text-xl font-bold tracking-tighter text-white uppercase">Goalie's Casino</h1>
                 </div>
                 <div className="flex items-center gap-4">
                     {allowanceReady ? (
@@ -616,6 +616,97 @@
             );
         };
 
+        const Poker = ({ onWin, onLoss, balance }) => {
+            const [deck, setDeck] = useState([]);
+            const [playerHand, setPlayerHand] = useState([]);
+            const [aiHand, setAiHand] = useState([]);
+            const [communityCards, setCommunityCards] = useState([]);
+            const [gameState, setGameState] = useState('BETTING'); // BETTING, FLOP, TURN, RIVER, SHOWDOWN
+            const [pot, setPot] = useState(0);
+            const [bet, setBet] = useState(50);
+            const [message, setMessage] = useState('');
+
+            const createDeck = () => {
+                const suits = ['♠', '♣', '♥', '♦'];
+                const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+                const newDeck = [];
+                for (const suit of suits) {
+                    for (const value of values) {
+                        newDeck.push({ value, suit });
+                    }
+                }
+                return newDeck.sort(() => Math.random() - 0.5);
+            };
+
+            const deal = () => {
+                if (balance < bet) return;
+                onLoss(bet);
+                const newDeck = createDeck();
+                setPlayerHand([newDeck.pop(), newDeck.pop()]);
+                setAiHand([newDeck.pop(), newDeck.pop()]);
+                setCommunityCards([]);
+                setDeck(newDeck);
+                setPot(bet * 2);
+                setGameState('FLOP');
+                setMessage('Flop dealt');
+            };
+
+            const nextStage = () => {
+                if (gameState === 'FLOP') {
+                    setCommunityCards([...communityCards, deck.pop(), deck.pop(), deck.pop()]);
+                    setGameState('TURN');
+                    setMessage('Turn dealt');
+                } else if (gameState === 'TURN') {
+                    setCommunityCards([...communityCards, deck.pop()]);
+                    setGameState('RIVER');
+                    setMessage('River dealt');
+                } else if (gameState === 'RIVER') {
+                    setCommunityCards([...communityCards, deck.pop()]);
+                    setGameState('SHOWDOWN');
+                    setMessage('Showdown!');
+                } else if (gameState === 'SHOWDOWN') {
+                    // Simplified winner determination
+                    const playerWins = Math.random() > 0.5;
+                    if (playerWins) {
+                        setMessage('You Win!');
+                        onWin(pot);
+                    } else {
+                        setMessage('AI Wins');
+                    }
+                    setGameState('BETTING');
+                }
+            };
+
+            return (
+                <div className="flex flex-col items-center gap-8 py-8">
+                    <div className="text-white">Pot: ${pot}</div>
+                    <div className="flex gap-2">
+                        {communityCards.map((card, i) => (
+                            <div key={i} className="w-16 h-24 bg-white text-black rounded-lg flex items-center justify-center font-bold">
+                                {card ? `${card.value}${card.suit}` : ''}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex gap-2">
+                        {playerHand.map((card, i) => (
+                            <div key={i} className="w-16 h-24 bg-white text-black rounded-lg flex items-center justify-center font-bold">
+                                {card ? `${card.value}${card.suit}` : ''}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="text-xl font-bold text-white">{message}</div>
+                    {gameState === 'BETTING' && (
+                        <button onClick={deal} className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl">Deal</button>
+                    )}
+                    {gameState !== 'BETTING' && (
+                        <button onClick={nextStage} className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl">
+                            {gameState === 'SHOWDOWN' ? 'Collect' : 'Next'}
+                        </button>
+                    )}
+                </div>
+            );
+        };
+
         const Sports = ({ balance, onWin, onLoss }) => {
             const [betAmount, setBetAmount] = useState(10);
             const [selectedMatch, setSelectedMatch] = useState(null);
@@ -764,6 +855,7 @@
                     { id: 'SLOTS', name: 'Slots', icon: RotateCcw, color: 'bg-blue-600', desc: 'Triple 7s for x50 payout' },
                     { id: 'BLACKJACK', name: 'Blackjack', icon: Hand, color: 'bg-blue-500', desc: 'Beat the dealer to 21' },
                     { id: 'ROULETTE', name: 'Roulette', icon: RotateCcw, color: 'bg-blue-400', desc: 'Bet on colors or numbers' },
+                    { id: 'POKER', name: 'Poker', icon: Trophy, color: 'bg-blue-800', desc: 'Video Poker' },
                     { id: 'SPORTS', name: 'Sports', icon: Trophy, color: 'bg-blue-700', desc: 'Bet on live matches' },
                     { id: 'LEADERBOARD', name: 'Leaderboard', icon: History, color: 'bg-zinc-800', desc: 'Check the high rollers' },
                 ].map(game => (
@@ -885,7 +977,7 @@
                                             animate={{ scale: 1 }}
                                             className="text-7xl md:text-9xl font-black uppercase tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20 mb-4"
                                         >
-                                            DP's Casino
+                                            Goalie's Casino
                                         </motion.h2>
                                         <p className="text-zinc-500 max-w-lg text-lg">
                                             Welcome to the digital underground. High stakes, low latency, pure adrenaline.
@@ -930,6 +1022,13 @@
                                                 balance={balance} 
                                                 onWin={(amt) => handleWin(amt, 'Roulette')} 
                                                 onLoss={(amt) => handleLoss(amt, 'Roulette')} 
+                                            />
+                                        )}
+                                        {currentGame === 'POKER' && (
+                                            <Poker 
+                                                balance={balance} 
+                                                onWin={(amt) => handleWin(amt, 'Poker')} 
+                                                onLoss={(amt) => handleLoss(amt, 'Poker')} 
                                             />
                                         )}
                                         {currentGame === 'SPORTS' && (
